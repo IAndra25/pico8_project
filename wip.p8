@@ -21,18 +21,24 @@ h=8,
 died=false
 }
 
+--making pipes table and adding
+-- pipes in it+calling function that spawns new pipes
 pipes = {}
 
  add(pipes, new_pipe(128, "down"))
- add(pipes, new_pipe(180, "up"))
- add(pipes, new_pipe(232, "down"))
- add(pipes, new_pipe(284, "up"))
+ add(pipes, new_pipe(198, "up"))
+ add(pipes, new_pipe(268, "down"))
+ add(pipes, new_pipe(338, "up"))
 
 end
+
+--function that spawns new pipes
+--with a random height between 50 and 90
 
 function new_pipe(x, dir)
  local h = flr(rnd(40)) + 50
 
+--defining what "down" and "up" means
  if dir == "down" then
   return {
    x = x,
@@ -59,11 +65,14 @@ mx=stat(32)
  -- delayed follow
  player.y += (my-player.y)*0.08
  
+ --making pipes "move" left
   for p in all(pipes) do
   	p.x -= 2
 
+--recycling pipes when they
+-- go off screen
   if p.x + p.w < 0 then
-   p.x = get_farthest_pipe() + 52
+   p.x = get_farthest_pipe() + 70
    reset_pipe(p)
   end
  end
@@ -83,19 +92,12 @@ function _draw()
  
 end
 
-function draw_pipes(x, y, h)
- spr(4,x,y,3,3)
-
- for i=1,h-2 do
-  spr(6,x,y + i*8,3,3)
- end
-
- spr(11,x,y + (h-1)*8,3,3)
-end
-
 function reset_pipe(p)
- p.h = flr(rnd(40)) + 24
 
+--randomize pipes height
+ p.h = flr(rnd(40)) + 30
+ 
+--randomize pipes direction
  if rnd(1) < 0.5 then
   p.dir = "down"
   p.y = 0
@@ -105,6 +107,7 @@ function reset_pipe(p)
  end
 end
 
+--loop to decide which is the farthest pipe
 function get_farthest_pipe()
  local farthest = 0
  for p in all(pipes) do
