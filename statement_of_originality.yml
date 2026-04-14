@@ -15,12 +15,7 @@ collaboration:
 
 # add as many "url+licence+comment" entries as necessary
 # (or remove it altogether if you haven't used any external code)
-code: 
-poke(0x5f2d,1)
-function _update()
-my=stat(33)
-mx=stat(32)
-  - comment: used the tutorial linked here to learn how to unlock mouse.
+used the tutorial linked here to learn how to unlock mouse.
     url: https://youtu.be/oAVJ7C-s35U
     licence:
 
