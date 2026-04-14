@@ -76,6 +76,16 @@ mx=stat(32)
   end
  end
 
+ player.died = false
+
+ for p in all(pipes) do
+  if rect_overlap(
+   player.x, player.y, player.w, player.h,
+   p.x, p.y, p.w, p.h*8
+  ) then
+   player.died = true
+  end
+ end
 end
 
 
@@ -88,7 +98,11 @@ function _draw()
  for p in all(pipes) do
   draw_pipe(p)
  end 
- 
+
+if player.died == true then
+ 	cls()
+ 	print ("game over",40, 60, 8)
+ 	end
 end
 
 function reset_pipe(p)
@@ -152,6 +166,13 @@ function draw_pipe_up(p)
   spr(body_l, p.x,     p.y + i*8)
   spr(body_r, p.x + 8, p.y + i*8)
  end
+end
+
+function rect_overlap(x1,y1,w1,h1,x2,y2,w2,h2)
+ return x1 < x2 + w2 and
+        x1 + w1 > x2 and
+        y1 < y2 + h2 and
+        y1 + h1 > y2
 end
 __gfx__
 00000000770000000000000077777777000000000aaaaaaa9999999000000000eeeeeeee77777777000000000000000000000000000000000000000000000000
