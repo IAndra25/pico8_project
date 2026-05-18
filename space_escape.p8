@@ -29,6 +29,7 @@ function _init()
  add(pipes,new_pipe(338,"up"))
 
  death_timer=0
+ game_over_sound_played=false
 
  pipe_speed=2
  speed_timer=0
@@ -53,7 +54,15 @@ function _update()
  mx=stat(32)
  my=stat(33)
 
+ -- death state
  if player.died then
+
+  -- play game over sound once
+  if not game_over_sound_played then
+   sfx(1)
+   game_over_sound_played=true
+  end
+
   death_timer+=1
 
   if death_timer>30 and btnp(btn_x) then
@@ -61,6 +70,11 @@ function _update()
   end
 
   return
+ end
+
+ -- play sound 002 while alive
+ if stat(46)==-1 then
+  sfx(2)
  end
 
  -- animation using sprites 001 and 017
@@ -87,18 +101,26 @@ function _update()
   score_timer=0
  end
 
+ -- smooth movement
  player.y+=(my-player.y)*0.08
 
+ -- move pipes
  for p in all(pipes) do
+
   p.x-=pipe_speed
 
+  -- recycle pipes with random spacing
   if p.x+p.w<0 then
+
    p.x=get_farthest_pipe()+flr(rnd(60))+50
+
    reset_pipe(p)
   end
  end
 
+ -- pipe collision
  for p in all(pipes) do
+
   if rect_overlap(
    flr(player.x)+1,
    flr(player.y)+1,
@@ -109,26 +131,31 @@ function _update()
    p.w-4,
    p.h*8
   ) then
+
    player.died=true
    death_timer=0
   end
  end
 
+ -- border collision with sprite 003
  if hit_sprite_003(
   flr(player.x)+1,
   flr(player.y)+1,
   player.w-2,
   player.h-2
  ) then
+
   player.died=true
   death_timer=0
  end
 end
 
 function _draw()
+
  cls()
 
  draw_stars()
+
  map(0,0)
 
  spr(player.sp,player.x,player.y)
@@ -140,7 +167,9 @@ function _draw()
  print("score:"..score,2,2,7)
 
  if player.died then
+
   cls()
+
   print("game over",40,60,8)
   print("score:"..score,46,70,7)
 
@@ -151,18 +180,25 @@ function _draw()
 end
 
 function reset_pipe(p)
+
+ -- random height: 4-8 tiles
  p.h=flr(rnd(5))+4
 
+ -- random direction
  if rnd(1)<0.5 then
+
   p.dir="down"
   p.y=0
+
  else
+
   p.dir="up"
   p.y=128-p.h*8
  end
 end
 
 function get_farthest_pipe()
+
  local farthest=0
 
  for p in all(pipes) do
@@ -175,6 +211,7 @@ function get_farthest_pipe()
 end
 
 function draw_pipe(p)
+
  if p.dir=="down" then
   draw_pipe_down(p)
  else
@@ -183,12 +220,14 @@ function draw_pipe(p)
 end
 
 function draw_pipe_down(p)
+
  local body_l=5
  local body_r=6
  local cap_l=21
  local cap_r=22
 
  for i=0,p.h-2 do
+
   spr(body_l,p.x,p.y+i*8)
   spr(body_r,p.x+8,p.y+i*8)
  end
@@ -198,6 +237,7 @@ function draw_pipe_down(p)
 end
 
 function draw_pipe_up(p)
+
  local body_l=5
  local body_r=6
  local cap_l=8
@@ -207,12 +247,14 @@ function draw_pipe_up(p)
  spr(cap_r,p.x+8,p.y)
 
  for i=1,p.h-1 do
+
   spr(body_l,p.x,p.y+i*8)
   spr(body_r,p.x+8,p.y+i*8)
  end
 end
 
 function rect_overlap(x1,y1,w1,h1,x2,y2,w2,h2)
+
  return x1<x2+w2 and
         x1+w1>x2 and
         y1<y2+h2 and
@@ -220,13 +262,16 @@ function rect_overlap(x1,y1,w1,h1,x2,y2,w2,h2)
 end
 
 function hit_sprite_003(x,y,w,h)
+
  local x1=flr(x/8)
  local y1=flr(y/8)
+
  local x2=flr((x+w-1)/8)
  local y2=flr((y+h-1)/8)
 
  for ty=y1,y2 do
   for tx=x1,x2 do
+
    if mget(tx,ty)==3 then
     return true
    end
@@ -237,6 +282,7 @@ function hit_sprite_003(x,y,w,h)
 end
 
 function draw_stars()
+
  srand(42)
 
  for i=1,40 do
@@ -279,3 +325,7 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+0001000022050200501e0501a05015050120500e0500c050070500405000050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001000000835006350043500235000350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0010001f0c6100c6100c6100c6100c6100b6100b6100b6100b6100b6100c6100c6100c6100c6100c6100c6100b6100b6100c6100c6100c6100c6100c6100c6100c6100c6100c6100b6100b6100b6100b6100c610
