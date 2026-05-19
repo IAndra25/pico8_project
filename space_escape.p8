@@ -54,10 +54,8 @@ function _update()
  mx=stat(32)
  my=stat(33)
 
- -- death state
+ -- player death
  if player.died then
-
-  -- play game over sound once
   if not game_over_sound_played then
    sfx(1)
    game_over_sound_played=true
@@ -72,12 +70,12 @@ function _update()
   return
  end
 
- -- play sound 002 while alive
+ --sound 2 when alive
  if stat(46)==-1 then
   sfx(2)
  end
 
- -- animation using sprites 001 and 017
+ --animation
  anim_timer+=1
 
  if anim_timer%10<5 then
@@ -86,14 +84,14 @@ function _update()
   player.sp=17
  end
 
- -- speed increase over time
+ --increase speed
  speed_timer+=1
 
  if speed_timer%300==0 then
   pipe_speed+=0.25
  end
 
- -- score increases every second
+ --increase score/second
  score_timer+=1
 
  if score_timer>=30 then
@@ -101,15 +99,15 @@ function _update()
   score_timer=0
  end
 
- -- smooth movement
+ --follow mouse
  player.y+=(my-player.y)*0.08
 
- -- move pipes
+ --pipes move to left
  for p in all(pipes) do
 
   p.x-=pipe_speed
 
-  -- recycle pipes with random spacing
+  --reuse pipes
   if p.x+p.w<0 then
 
    p.x=get_farthest_pipe()+flr(rnd(60))+50
@@ -118,7 +116,7 @@ function _update()
   end
  end
 
- -- pipe collision
+ --collision
  for p in all(pipes) do
 
   if rect_overlap(
@@ -137,7 +135,7 @@ function _update()
   end
  end
 
- -- border collision with sprite 003
+ --border collision
  if hit_sprite_003(
   flr(player.x)+1,
   flr(player.y)+1,
@@ -181,10 +179,10 @@ end
 
 function reset_pipe(p)
 
- -- random height: 4-8 tiles
+ --random pipe height
  p.h=flr(rnd(5))+4
 
- -- random direction
+ --random direction(up/down)
  if rnd(1)<0.5 then
 
   p.dir="down"
