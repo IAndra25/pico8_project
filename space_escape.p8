@@ -21,61 +21,73 @@ function _init()
   died=false
  }
 
- pipes={}
+ game_state="menu"
+end
 
+function start_game()
+ player.died=false
+ player.sp=1
+ player.x=6
+ player.y=8
+
+ death_timer=0
+ pipe_speed=2
+ speed_timer=0
+ anim_timer=0
+ score=0
+ score_timer=0
+
+ pipes={}
  add(pipes,new_pipe(128,"down"))
  add(pipes,new_pipe(198,"up"))
  add(pipes,new_pipe(268,"down"))
  add(pipes,new_pipe(338,"up"))
 
- death_timer=0
- game_over_sound_played=false
-
- pipe_speed=2
- speed_timer=0
-
- anim_timer=0
-
- score=0
- score_timer=0
+ game_state="play"
 end
 
 function new_pipe(x,dir)
  local h=flr(rnd(5))+4
 
  if dir=="down" then
-  return {x=x,y=0,w=16,h=h,dir=dir}
+  return {x=x,y=0,w=16,h=h,dir=dir,near_played=false}
  else
-  return {x=x,y=128-h*8,w=16,h=h,dir=dir}
+  return {x=x,y=128-h*8,w=16,h=h,dir=dir,near_played=false}
  end
 end
 
 function _update()
+ if game_state=="menu" then
+  update_menu()
+ elseif game_state=="play" then
+  update_game()
+ elseif game_state=="gameover" then
+  update_gameover()
+ end
+end
+
+function update_menu()
+ if btnp(btn_x) then
+  start_game()
+ end
+end
+
+function update_gameover()
+ death_timer+=1
+
+ if death_timer>30 and btnp(btn_x) then
+  start_game()
+ end
+end
+
+function update_game()
  mx=stat(32)
  my=stat(33)
 
- -- player death
- if player.died then
-  if not game_over_sound_played then
-   sfx(1)
-   game_over_sound_played=true
-  end
-
-  death_timer+=1
-
-  if death_timer>30 and btnp(btn_x) then
-   _init()
-  end
-
-  return
- end
-
- --sound 2 when alive
  if stat(46)==-1 then
-  sfx(2)
+  sfx(2,0)
  end
 
- --animation
  anim_timer+=1
 
  if anim_timer%10<5 then
@@ -84,14 +96,12 @@ function _update()
   player.sp=17
  end
 
- --increase speed
  speed_timer+=1
 
  if speed_timer%300==0 then
   pipe_speed+=0.25
  end
 
- --increase score/second
  score_timer+=1
 
  if score_timer>=30 then
@@ -99,26 +109,42 @@ function _update()
   score_timer=0
  end
 
- --follow mouse
  player.y+=(my-player.y)*0.08
 
- --pipes move to left
  for p in all(pipes) do
-
   p.x-=pipe_speed
 
-  --reuse pipes
   if p.x+p.w<0 then
-
    p.x=get_farthest_pipe()+flr(rnd(60))+50
-
    reset_pipe(p)
   end
  end
 
- --collision
+ -- close pass sound
  for p in all(pipes) do
+ local px=flr(player.x)+1
+ local py=flr(player.y)+1
+ local pw=player.w-2
+ local ph=player.h-2
 
+ local pipe_x=p.x+2
+ local pipe_y=p.y
+ local pipe_w=p.w-4
+ local pipe_h=p.h*8
+
+ local x_close=pipe_x < px+pw+4 and pipe_x+pipe_w > px-10
+ local y_close=py+ph > pipe_y-4 and py < pipe_y+pipe_h+10
+
+ local touching=rect_overlap(px,py,pw,ph,pipe_x,pipe_y,pipe_w,pipe_h)
+
+ if not p.near_played and x_close and y_close and not touching then
+  sfx(3,2)
+  p.near_played=true
+ end
+end
+
+ -- pipe collision
+ for p in all(pipes) do
   if rect_overlap(
    flr(player.x)+1,
    flr(player.y)+1,
@@ -129,31 +155,54 @@ function _update()
    p.w-4,
    p.h*8
   ) then
-
    player.died=true
    death_timer=0
+   game_state="gameover"
+   sfx(-1,0)
+   sfx(1,1)
+   return
   end
  end
 
- --border collision
+ -- border collision
  if hit_sprite_003(
   flr(player.x)+1,
   flr(player.y)+1,
   player.w-2,
   player.h-2
  ) then
-
   player.died=true
   death_timer=0
+  game_state="gameover"
+  sfx(-1,0)
+  sfx(1,1)
+  return
  end
 end
 
 function _draw()
+ if game_state=="menu" then
+  draw_menu()
+ elseif game_state=="play" then
+  draw_game()
+ elseif game_state=="gameover" then
+  draw_gameover()
+ end
+end
 
+function draw_menu()
  cls()
-
  draw_stars()
+ map(0,0)
 
+ print("pipe flyer",42,42,10)
+ print("press x to start",31,64,7)
+ print("avoid the pipes",35,78,6)
+end
+
+function draw_game()
+ cls()
+ draw_stars()
  map(0,0)
 
  spr(player.sp,player.x,player.y)
@@ -163,40 +212,33 @@ function _draw()
  end
 
  print("score:"..score,2,2,7)
+end
 
- if player.died then
+function draw_gameover()
+ cls()
 
-  cls()
+ print("game over",40,60,8)
+ print("score:"..score,46,70,7)
 
-  print("game over",40,60,8)
-  print("score:"..score,46,70,7)
-
-  if death_timer>30 then
-   print("press x to play again",17,82,8)
-  end
+ if death_timer>30 then
+  print("press x to play again",17,82,8)
  end
 end
 
 function reset_pipe(p)
-
- --random pipe height
  p.h=flr(rnd(5))+4
+ p.near_played=false
 
- --random direction(up/down)
  if rnd(1)<0.5 then
-
   p.dir="down"
   p.y=0
-
  else
-
   p.dir="up"
   p.y=128-p.h*8
  end
 end
 
 function get_farthest_pipe()
-
  local farthest=0
 
  for p in all(pipes) do
@@ -209,7 +251,6 @@ function get_farthest_pipe()
 end
 
 function draw_pipe(p)
-
  if p.dir=="down" then
   draw_pipe_down(p)
  else
@@ -218,14 +259,12 @@ function draw_pipe(p)
 end
 
 function draw_pipe_down(p)
-
  local body_l=5
  local body_r=6
  local cap_l=21
  local cap_r=22
 
  for i=0,p.h-2 do
-
   spr(body_l,p.x,p.y+i*8)
   spr(body_r,p.x+8,p.y+i*8)
  end
@@ -235,7 +274,6 @@ function draw_pipe_down(p)
 end
 
 function draw_pipe_up(p)
-
  local body_l=5
  local body_r=6
  local cap_l=8
@@ -245,14 +283,12 @@ function draw_pipe_up(p)
  spr(cap_r,p.x+8,p.y)
 
  for i=1,p.h-1 do
-
   spr(body_l,p.x,p.y+i*8)
   spr(body_r,p.x+8,p.y+i*8)
  end
 end
 
 function rect_overlap(x1,y1,w1,h1,x2,y2,w2,h2)
-
  return x1<x2+w2 and
         x1+w1>x2 and
         y1<y2+h2 and
@@ -260,7 +296,6 @@ function rect_overlap(x1,y1,w1,h1,x2,y2,w2,h2)
 end
 
 function hit_sprite_003(x,y,w,h)
-
  local x1=flr(x/8)
  local y1=flr(y/8)
 
@@ -269,7 +304,6 @@ function hit_sprite_003(x,y,w,h)
 
  for ty=y1,y2 do
   for tx=x1,x2 do
-
    if mget(tx,ty)==3 then
     return true
    end
@@ -280,7 +314,6 @@ function hit_sprite_003(x,y,w,h)
 end
 
 function draw_stars()
-
  srand(42)
 
  for i=1,40 do
@@ -327,3 +360,4 @@ __sfx__
 0001000022050200501e0501a05015050120500e0500c050070500405000050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000835006350043500235000350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0010001f0c6100c6100c6100c6100c6100b6100b6100b6100b6100b6100c6100c6100c6100c6100c6100c6100b6100b6100c6100c6100c6100c6100c6100c6100c6100c6100c6100b6100b6100b6100b6100c610
+001000003465038650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
