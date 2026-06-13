@@ -195,7 +195,7 @@ function draw_menu()
  draw_stars()
  map(0,0)
 
- print("pipe flyer",42,42,10)
+ print("space escape",42,42,10)
  print("press x to start",31,64,7)
  print("avoid the pipes",35,78,6)
 end
